@@ -1,0 +1,35 @@
+# Run: docker build -f .\build.docker.armhf --output=./release .
+
+ARG GO_VERSION=1.22.8
+ARG ARCH=armhf
+
+FROM docker.elastic.co/beats-dev/golang-crossbuild:${GO_VERSION}-${ARCH} AS bin
+WORKDIR /app
+COPY . .
+RUN go env -w GO111MODULE=on
+RUN go env -w CGO_ENABLED=1
+RUN go env -w GOOS=linux
+RUN go env -w GOARCH=arm
+RUN go env -w CC=arm-linux-gnueabihf-gcc
+RUN go mod download && go mod verify && go mod tidy
+RUN go build --ldflags '-extldflags "-static"' -o apimain cmd/apimain.go
+RUN rm -rf /out/*
+RUN mkdir -p data runtime bin
+RUN for d in resources docs conf data runtime; do mkdir -p /out/$d; cp -ar $d /out/; done
+RUN cp apimain /out/
+
+FROM docker.elastic.co/beats-dev/golang-crossbuild:${GO_VERSION}-main AS docs
+WORKDIR /docs
+RUN apt update
+RUN apt install -y git tzdata file
+COPY . .
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+RUN swag init -g cmd/apimain.go --output docs/api --instanceName api --exclude http/controller/admin
+RUN swag init -g cmd/apimain.go --output docs/admin --instanceName admin --exclude http/controller/api
+RUN cp -ar docs /out/
+
+FROM scratch AS docs_out
+COPY --from=docs /out/docs/ /docs/
+
+FROM scratch AS bin_out
+COPY --from=bin /out/ /
