@@ -1,0 +1,15 @@
+[Unit]
+Description=RustDesk API Service
+After=apache2.service
+Requires=fvapp-rustdesk-id.service
+
+[Service]
+WorkingDirectory=/apps/rustdesk
+ExecStart=/apps/rustdesk/apimain -c ./conf/config.yaml
+Type=exec
+TimeoutSec=200
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

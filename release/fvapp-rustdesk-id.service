@@ -1,0 +1,14 @@
+[Unit]
+Description=RustDesk ID Service
+Requires=fvapp-rustdesk-relay.service
+
+[Service]
+WorkingDirectory=/apps/rustdesk
+ExecStart=/apps/rustdesk/hbbs -r <host> -R <host> -k <key>
+Type=exec
+TimeoutSec=200
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

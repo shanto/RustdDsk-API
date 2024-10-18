@@ -1,0 +1,13 @@
+[Unit]
+Description=RustDesk Relay Service
+
+[Service]
+WorkingDirectory=/apps/rustdesk
+ExecStart=/apps/rustdesk/hbbr -k <key>
+Type=exec
+TimeoutSec=200
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
